@@ -7,6 +7,28 @@
 import os
 import xlwt
 import exifread
+from PIL import Image
+
+
+def gray_average(file):
+    i = Image.open(file)
+    pixels = i.load()  # this is not a list, nor is it list()'able
+    width, height = i.size
+    R = 0
+    G = 0
+    B = 0
+    n = 1
+
+    for x in range(1500, 2200):
+        for y in range(900, 1200):
+            cpixel = pixels[x, y]
+            R += (cpixel[0] - R) / n * 1.0
+            G += (cpixel[1] - G) / n * 1.0
+            B += (cpixel[2] - B) / n * 1.0
+
+            avg_out = (0.3 * R + 0.59 * G + 0.11 * B)
+            n += 1
+    return int(avg_out)
 
 
 def file_name(file_dir):
@@ -28,7 +50,7 @@ for index in file_name('.'):
     tags = exifread.process_file(f, details=False, strict=True)
     tag = {}
     print("%s" % name)
-    sheet.write(i, 0, name[2:])
+    sheet.write(i, 0, name[2:-4:])
 
     for key, value in tags.items():
         if key in ('EXIF ExposureTime'):
@@ -39,6 +61,9 @@ for index in file_name('.'):
             tag[key] = str(value)
             print ("%s == %s" % (key, value))
             sheet.write(i, 2, tag[key])
+
+    sheet.write(i, 3, gray_average(name))
     i = i + 1
+
 
 data.save('ae.xls')
