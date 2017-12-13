@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# @Author: Bimyl
+# @Author: anchen
 # @Date:   2017-11-30 12:02:26
-# @Last Modified by:   Bimyl
-# @Last Modified time: 2017-12-06 18:05:04
+# @Last Modified by:   anchen
+# @Last Modified time: 2017-12-13 11:38:40
 import os
 import xlwt
 import exifread
@@ -43,27 +43,29 @@ def file_name(file_dir):
 data = xlwt.Workbook(encoding='ascii')
 sheet = data.add_sheet("AE")
 
+sheet.write(0, 0, "LV")
+sheet.write(0, 1, "shutter")
+sheet.write(0, 2, "gain")
+sheet.write(0, 3, "brightness")
 i = 0
 for index in file_name('.'):
-    name = index
+    name = index 
     f = open(name, 'rb')
     tags = exifread.process_file(f, details=False, strict=True)
     tag = {}
-    print("%s" % name)
-    sheet.write(i, 0, name[2:-4:])
+    print("%s" % name[2:-4:])
+    sheet.write(i+1, 0, float(name[2:-4:]))
 
     for key, value in tags.items():
         if key in ('EXIF ExposureTime'):
             tag[key] = str(value)
             print ("%s == %s" % (key, value))
-            sheet.write(i, 1, tag[key])
+            sheet.write(i+1, 1, tag[key])
         elif key in ('EXIF ISOSpeedRatings'):
             tag[key] = str(value)
             print ("%s == %s" % (key, value))
-            sheet.write(i, 2, tag[key])
-
-    sheet.write(i, 3, gray_average(name))
+            sheet.write(i+1, 2, int(tag[key]))
+    sheet.write(i+1, 3, gray_average(name))
     i = i + 1
-
 
 data.save('ae.xls')
