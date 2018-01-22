@@ -8,8 +8,6 @@ import os
 import xlwt
 import exifread
 from PIL import Image
-import _thread
-import threading
 
 
 def gray_average(file):
