@@ -69,7 +69,6 @@ def main():
     sheet.write(0, 1, "shutter")
     sheet.write(0, 2, "gain")
     sheet.write(0, 3, "brightness")
-    mutex = threading.Lock()
     i = 0
     for index in file_name('.'):
         name = index
