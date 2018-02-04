@@ -78,7 +78,11 @@ def main():
     sheet.write(0, 1, "shutter")
     sheet.write(0, 2, "gain")
     sheet.write(0, 3, "brightness")
+<<<<<<< HEAD
 
+=======
+    i = 0
+>>>>>>> 175a7c3c21eecca10900a725fd86e2199f7345b4
     for index in file_name('.'):
         name.append(index)
 
