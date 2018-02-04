@@ -8,27 +8,33 @@ import os
 import xlwt
 import exifread
 from PIL import Image
+import threading
 
 
 def gray_average(file):
-    # calculation  the image brightness
-    i = Image.open(file)
-    pixels = i.load()  # this is not a list, nor is it list()'able
-    width, height = i.size
-    R = 0
-    G = 0
-    B = 0
-    n = 1
-    for x in range(1500, 2200):
-        for y in range(900, 1200):
-            cpixel = pixels[x, y]
-            R += (cpixel[0] - R) / n * 1.0
-            G += (cpixel[1] - G) / n * 1.0
-            B += (cpixel[2] - B) / n * 1.0
+    lock.acquire()
+    try:
+        img = Image.open(file)
+        pixels = img.load()  # this is not a list, nor is it list()'able
+        width, height = img.size
+        R = 0
+        G = 0
+        B = 0
+        n = 1
+        for x in range(1500, 2200):
+            for y in range(900, 1200):
+                cpixel = pixels[x, y]
+                R += (cpixel[0] - R) / n * 1.0
+                G += (cpixel[1] - G) / n * 1.0
+                B += (cpixel[2] - B) / n * 1.0
 
 # an RGB to brightness formula
-            avg_out = (0.3 * R + 0.59 * G + 0.11 * B)
-            n += 1
+                avg_out = (0.3 * R + 0.59 * G + 0.11 * B)
+                n += 1
+    finally:
+        lock.release()
+    # calculation  the image brightness
+
     return int(avg_out)
 
 
@@ -52,30 +58,38 @@ def ae_exif(f, i, name):
     for key, value in tags.items():
         if key in ('EXIF ExposureTime'):
             tag[key] = str(value)
-            print ("%s == %s" % (key, value))
+            print("%s == %s" % (key, value))
             sheet.write(i + 1, 1, tag[key])
         elif key in ('EXIF ISOSpeedRatings'):
             tag[key] = str(value)
-            print ("%s == %s" % (key, value))
+            print("%s == %s" % (key, value))
             sheet.write(i + 1, 2, int(tag[key]))
 
 
 def main():
-    global sheet, i, index
+    global sheet, i, index, lock, fname
+    name = []
+    fname = []
 # init excel information
+
     data = xlwt.Workbook(encoding='ascii')
     sheet = data.add_sheet("AE")
     sheet.write(0, 0, "LV")
     sheet.write(0, 1, "shutter")
     sheet.write(0, 2, "gain")
     sheet.write(0, 3, "brightness")
-    mutex = threading.Lock()
-    i = 0
+
     for index in file_name('.'):
-        name = index
-        f = open(name, 'rb')
-        ae_exif(f, i, name)
-        gray_brightness = gray_average(name)
+        name.append(index)
+
+    lock = threading.Lock()
+    t1 = threading.Thread(target=gray_average, args=(name,))
+    i = 0
+    t1.start()
+    for index, val in enumerate(name):
+        f = open(name[index], 'rb')
+        ae_exif(f, i, val)
+        gray_brightness = t1.join()
         sheet.write(i + 1, 3, gray_brightness)
         print("brightness == %s" % (gray_brightness))
         i = i + 1
